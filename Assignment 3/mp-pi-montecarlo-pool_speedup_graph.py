@@ -79,7 +79,7 @@ def compute_pi(args):
     ax.plot(theory_list_x, theory_list_y, label='Theoretical speedup')
     ax.plot(measure_list_x, measure_list_y, label='Measured speedup')
     ax.legend(loc='upper left')
-    plt.show()
+    plt.savefig('compute.png')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -91,7 +91,7 @@ if __name__ == "__main__":
                         type = int,
                         help='Number of parallel processes')
     parser.add_argument('--steps', '-s',
-                        default='10000000',
+                        default='100000',
                         type = int,
                         help='Number of steps in the Monte Carlo simulation')
     args = parser.parse_args()
