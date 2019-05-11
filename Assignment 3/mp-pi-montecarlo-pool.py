@@ -6,7 +6,7 @@ import time
 from math import pi
 import matplotlib.pyplot as plt
 
-# Each worker runs this method
+# Each worker runs this function
 def sample_pi(result_queue, seed, batch_size):
     # Using a static start seed, trying to reduce variability between runs.
     random.seed(seed)
@@ -19,6 +19,7 @@ def sample_pi(result_queue, seed, batch_size):
                 s += 1
         result_queue.put(s)    
     
+# Gathers results from each worker and calculates accuracy
 def estimator(result_queue, workers, acc_target, batch_size):
     n_total = 0
     s_total = 0

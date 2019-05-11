@@ -42,6 +42,8 @@ def kmeans(k, data, nr_iter = 100):
     for j in range(nr_iter):
         logging.debug("=== Iteration %d ===" % (j+1))
 
+        start = time.time()
+
         # Assign data points to nearest centroid
         variation = np.zeros(k)
         cluster_sizes = np.zeros(k, dtype=int)        
@@ -54,12 +56,20 @@ def kmeans(k, data, nr_iter = 100):
         total_variation = sum(variation) 
         delta_variation += total_variation
         logging.info("%3d\t\t%f\t%f" % (j, total_variation, delta_variation))
+        
+        time_assign = time.time() - start
+        print("Time to assign: %1.6f" % (time_assign))
+
+        start = time.time()
 
         # Recompute centroids
         centroids = np.zeros((k,2)) # This fixes the dimension to 2
         for i in range(N):
             centroids[c[i]] += data[i]        
         centroids = centroids / cluster_sizes.reshape(-1,1)
+
+        time_recompute = time.time() - start
+        print("Time to recompute: %1.6f" % (time_recompute))
         
         logging.debug(cluster_sizes)
         logging.debug(c)
