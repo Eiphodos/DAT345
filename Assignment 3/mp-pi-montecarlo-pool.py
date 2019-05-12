@@ -34,6 +34,9 @@ def estimator(result_queue, workers, acc_target, batch_size):
     return n_total, s_total, pi_est, error, accuracy
 
 def compute_pi(args):
+
+    # Starting time for measurement
+    start = time.time()
     # Queue used by workers to send successes to the estimator method
     result_queue = mp.Queue()
 
@@ -41,25 +44,23 @@ def compute_pi(args):
     # Number of sucesses each worker calculates before sending it to the result queue
     batch_size = 1000
 
-    # Starting time for measurement
-    start = time.time()
+
 
     # A static (different) seed is used by each worker to reduce variability.
     for seed in range(args.workers):
-        p = mp.Process(target=sample_pi, args=(result_queue,seed, batch_size))
+        p = mp.Process(target=sample_pi, daemon = True, args=(result_queue,seed, batch_size))
         jobs.append(p)
         p.start()
     n_total, s_total, pi_est, error, accuracy = estimator(result_queue, args.workers, args.accuracy, batch_size)
 
-    # Ending time for measurement
-    measured_time = time.time() - start
-
-    # A more sophisticated way to do this would be to send a message to each worker
-    # from the estimator once accuracy has been reached that tells them to stop working
-    # and then running join for each worker.
+    # Terminating and then joining every working to avoid zombie processes
     for i in range(args.workers):
         jobs[i].terminate()
         print("Terminated job %6d" % i)   
+
+    for i in range(args.workers):
+        jobs[i].join()
+        print("Joined job %6d" % i)   
 
     result_queue.close()
     print("Closed result queue")
@@ -69,6 +70,9 @@ def compute_pi(args):
 
     print(" Steps\tSuccess\tPi est.\tError\tAccuracy")
     print("%6d\t%7d\t%1.5f\t%1.5f\t%1.5f" % (n_total, s_total, pi_est, error, accuracy))
+
+    # Ending time for measurement
+    measured_time = time.time() - start
     return measured_time / n_total
     
 # Calls compute_pi for k = 1, 2, 4, 8, 16 and 32

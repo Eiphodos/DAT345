@@ -27,6 +27,8 @@ def nearestCentroid(datum, centroids):
 
 def kmeans(k, data, nr_iter = 100):
     N = len(data)
+    total_time_assign = 0
+    total_time_recompute = 0
 
     # Choose k random data points as centroids
     centroids = data[np.random.choice(np.array(range(N)),size=k,replace=False)]
@@ -58,7 +60,7 @@ def kmeans(k, data, nr_iter = 100):
         logging.info("%3d\t\t%f\t%f" % (j, total_variation, delta_variation))
         
         time_assign = time.time() - start
-        print("Time to assign: %1.6f" % (time_assign))
+        total_time_assign += time_assign
 
         start = time.time()
 
@@ -69,12 +71,14 @@ def kmeans(k, data, nr_iter = 100):
         centroids = centroids / cluster_sizes.reshape(-1,1)
 
         time_recompute = time.time() - start
-        print("Time to recompute: %1.6f" % (time_recompute))
+        total_time_recompute += time_recompute
         
         logging.debug(cluster_sizes)
         logging.debug(c)
         logging.debug(centroids)
     
+    print("Total time assign: %1.5f" % (total_time_assign))
+    print("Total time recompute: %1.5f" % (total_time_recompute))
     return total_variation, c
 
 
@@ -96,6 +100,7 @@ def computeClustering(args):
     end_time = time.time()
     logging.info("Clustering complete in %3.2f [s]" % (end_time - start_time))
     print(f"Total variation {total_variation}")
+    print("Total time: %1.5f" % (end_time - start_time))
 
     if args.plot: # Assuming 2D data
         fig, axes = plt.subplots(nrows=1, ncols=1)
