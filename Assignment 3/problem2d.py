@@ -289,7 +289,6 @@ if __name__ == "__main__":
     if args.speedup is True:
         # Override any manual settings user might have set
         args.workers = 1
-        args.iterations = 50
         args.samples = 50000
         print_speedup(args)
     else:
