@@ -12,26 +12,33 @@ def sample_pi(result_queue, seed, batch_size):
     random.seed(seed)
     while (True):
         s = 0
-        for i in range (batch_size):    
+        b = random.randint(int(batch_size / 2), int(batch_size * 2))
+        for i in range (b):    
             x = random.random()
             y = random.random()
             if x**2 + y**2 <= 1.0:
                 s += 1
-        result_queue.put(s)    
+        result_queue.put((s, b))    
     
 # Gathers results from each worker and calculates accuracy
-def estimator(result_queue, workers, acc_target, batch_size):
+def estimator(result_queue, workers, acc_target):
     n_total = 0
     s_total = 0
     accuracy = 0
+    total_queue_wait = 0
+    total_calc_wait = 0
     while (accuracy < acc_target):
-        successes = result_queue.get()
-        n_total += batch_size
+        start = time.time()
+        successes, batch = result_queue.get()
+        total_queue_wait += (time.time() - start)
+        start = time.time()
+        n_total += batch
         s_total = s_total + successes
         pi_est = (4.0*s_total)/n_total
         error = pi-pi_est
         accuracy = 1- abs(error)/pi
-    return n_total, s_total, pi_est, error, accuracy
+        total_calc_wait += (time.time() - start)
+    return n_total, s_total, pi_est, error, accuracy, total_calc_wait, total_queue_wait
 
 def compute_pi(args):
 
@@ -51,7 +58,7 @@ def compute_pi(args):
         p = mp.Process(target=sample_pi, daemon = True, args=(result_queue,seed, batch_size))
         jobs.append(p)
         p.start()
-    n_total, s_total, pi_est, error, accuracy = estimator(result_queue, args.workers, args.accuracy, batch_size)
+    n_total, s_total, pi_est, error, accuracy, total_calc_wait, total_queue_wait = estimator(result_queue, args.workers, args.accuracy)
 
     # Terminating and then joining every working to avoid zombie processes
     for i in range(args.workers):
@@ -73,6 +80,9 @@ def compute_pi(args):
 
     # Ending time for measurement
     measured_time = time.time() - start
+    print("Total time\tQueue wait\tCalc wait")
+    print("%1.4f\t\t%1.4f\t\t%1.4f" % (measured_time, total_queue_wait, total_calc_wait))
+
     return measured_time / n_total
     
 # Calls compute_pi for k = 1, 2, 4, 8, 16 and 32
