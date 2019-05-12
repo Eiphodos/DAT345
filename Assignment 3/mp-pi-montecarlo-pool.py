@@ -108,7 +108,7 @@ def print_speedup(args):
         measure_list_y.append(actual_speedup)
         k = k * 2
         args.workers = k
-    ax.set(xlabel='k', ylabel='Speedup', title='Test done with accuracy goal 0.9999999')
+    ax.set(xlabel='k', ylabel='Speedup', title='Test done with accuracy goal 0.999999')
     ax.grid()
     ax.plot(theory_list_x, theory_list_y, label='Theoretical speedup')
     ax.plot(measure_list_x, measure_list_y, label='Measured speedup')
