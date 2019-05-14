@@ -209,43 +209,6 @@ def computeClustering(args):
         plt.close(fig)
     return total_time
 
-def print_speedup(args):
-
-    fig, ax = plt.subplots()
-    theory_list_x = []
-    theory_list_y = []
-    measure_list_x = []
-    measure_list_y = []
-
-    k = args.workers
-    actual_speedup = k
-
-    time_k_one = computeClustering(args)
-
-    theory_list_x.append(k)
-    theory_list_y.append(k)
-    measure_list_x.append(k)
-    measure_list_y.append(actual_speedup)
-
-    k = k * 2
-    args.workers = k
-
-    while (k < 64):
-        time_k = computeClustering(args)
-        actual_speedup = time_k_one / time_k
-        theory_list_x.append(k)
-        theory_list_y.append(k)
-        measure_list_x.append(k)
-        measure_list_y.append(actual_speedup)
-        k = k * 2
-        args.workers = k
-    ax.set(xlabel='k', ylabel='Speedup', title='Test done with 50000 samples and 500 iterations')
-    ax.grid()
-    ax.plot(theory_list_x, theory_list_y, label='Theoretical speedup')
-    ax.plot(measure_list_x, measure_list_y, label='Measured speedup')
-    ax.legend(loc='upper left')
-    plt.savefig('kmeans_speedup.png')
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Compute a k-means clustering.',
@@ -280,17 +243,6 @@ if __name__ == "__main__":
     parser.add_argument('--debug', '-d',
                         action='store_true',
                         help='Print debugging output')
-    parser.add_argument('--speedup', '-m',
-                        default = False,
-                        action='store_true',
-                        required=False,
-                        help='Run automatic test for speedup graph or not.')
     args = parser.parse_args()
-    if args.speedup is True:
-        # Override any manual settings user might have set
-        args.workers = 1
-        args.samples = 50000
-        print_speedup(args)
-    else:
-        computeClustering(args)
+    computeClustering(args)
 

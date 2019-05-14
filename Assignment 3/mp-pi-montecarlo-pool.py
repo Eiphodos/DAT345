@@ -1,130 +1,36 @@
 #!/usr/bin/env python
-import multiprocessing as mp# See https://docs.python.org/3/library/multiprocessing.html
+import multiprocessing # See https://docs.python.org/3/library/multiprocessing.html
 import argparse # See https://docs.python.org/3/library/argparse.html
 import random
-import time
 from math import pi
-import matplotlib.pyplot as plt
+import time
 
-# Each worker runs this function
-def sample_pi(result_queue, seed, batch_size):
-    # Using a static start seed, trying to reduce variability between runs.
-    random.seed(seed)
-    while (True):
-        s = 0
-        b = random.randint(int(batch_size / 2), int(batch_size * 2))
-        for i in range (b):    
-            x = random.random()
-            y = random.random()
-            if x**2 + y**2 <= 1.0:
-                s += 1
-        result_queue.put((s, b))    
-    
-# Gathers results from each worker and calculates accuracy
-def estimator(result_queue, workers, acc_target):
-    n_total = 0
-    s_total = 0
-    accuracy = 0
-    total_queue_wait = 0
-    total_calc_wait = 0
-    while (accuracy < acc_target):
-        start = time.time()
-        successes, batch = result_queue.get()
-        total_queue_wait += (time.time() - start)
-        start = time.time()
-        n_total += batch
-        s_total = s_total + successes
-        pi_est = (4.0*s_total)/n_total
-        error = pi-pi_est
-        accuracy = 1- abs(error)/pi
-        total_calc_wait += (time.time() - start)
-    return n_total, s_total, pi_est, error, accuracy, total_calc_wait, total_queue_wait
+def sample_pi(n):
+    """ Perform n steps of Monte Carlo simulation for estimating Pi/4.
+        Returns the number of sucesses."""
+    print("Hello from a worker")
+    random.seed()
+    s = 0
+    for i in range(n):
+        x = random.random()
+        y = random.random()
+        if x**2 + y**2 <= 1.0:
+            s += 1
+    return s
+
 
 def compute_pi(args):
-
-    # Starting time for measurement
-    start = time.time()
-    # Queue used by workers to send successes to the estimator method
-    result_queue = mp.Queue()
-
-    jobs = []
-    # Number of sucesses each worker calculates before sending it to the result queue
-    batch_size = 1000
-
-
-
-    # A static (different) seed is used by each worker to reduce variability.
-    for seed in range(args.workers):
-        p = mp.Process(target=sample_pi, daemon = True, args=(result_queue,seed, batch_size))
-        jobs.append(p)
-        p.start()
-    n_total, s_total, pi_est, error, accuracy, total_calc_wait, total_queue_wait = estimator(result_queue, args.workers, args.accuracy)
-
-    # Terminating and then joining every working to avoid zombie processes
-    for i in range(args.workers):
-        jobs[i].terminate()
-        print("Terminated job %6d" % i)   
-
-    for i in range(args.workers):
-        jobs[i].join()
-        print("Joined job %6d" % i)   
-
-    result_queue.close()
-    print("Closed result queue")
-
-    result_queue.join_thread()
-    print("joined result queue")
-
-    print(" Steps\tSuccess\tPi est.\tError\tAccuracy")
-    print("%6d\t%7d\t%1.5f\t%1.5f\t%1.5f" % (n_total, s_total, pi_est, error, accuracy))
-
-    # Ending time for measurement
-    measured_time = time.time() - start
-    print("Total time\tQueue wait\tCalc wait")
-    print("%1.4f\t\t%1.4f\t\t%1.4f" % (measured_time, total_queue_wait, total_calc_wait))
-
-    return measured_time / n_total
+    n = int(args.steps / args.workers)
     
-# Calls compute_pi for k = 1, 2, 4, 8, 16 and 32
-# Calculates speedup based the time it takes for k=1 to calculate 1 step
-# Finally saves the result to a graph.
-def print_speedup(args):
+    p = multiprocessing.Pool(args.workers)
+    s = p.map(sample_pi, [n]*args.workers)
 
-    fig, ax = plt.subplots()
-    theory_list_x = []
-    theory_list_y = []
-    measure_list_x = []
-    measure_list_y = []
+    n_total = n*args.workers
+    s_total = sum(s)
+    pi_est = (4.0*s_total)/n_total
+    print(" Steps\tSuccess\tPi est.\tError")
+    print("%6d\t%7d\t%1.5f\t%1.5f" % (n_total, s_total, pi_est, pi-pi_est))
 
-    k = args.workers
-    actual_speedup = k
-
-    time_per_step_k_one = compute_pi(args)
-
-    theory_list_x.append(k)
-    theory_list_y.append(k)
-    measure_list_x.append(k)
-    measure_list_y.append(actual_speedup)
-
-    k = k * 2
-    args.workers = k
-
-    while (k < 64):
-        time_per_step_k = compute_pi(args)
-        actual_speedup = time_per_step_k_one / time_per_step_k
-        theory_list_x.append(k)
-        theory_list_y.append(k)
-        measure_list_x.append(k)
-        measure_list_y.append(actual_speedup)
-        k = k * 2
-        args.workers = k
-    title_string = 'Test done with accuracy goal %1.9f' % args.accuracy
-    ax.set(xlabel='k', ylabel='Speedup', title=title_string)
-    ax.grid()
-    ax.plot(theory_list_x, theory_list_y, label='Theoretical speedup')
-    ax.plot(measure_list_x, measure_list_y, label='Measured speedup')
-    ax.legend(loc='upper left')
-    plt.savefig('accuracy.png')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -135,19 +41,13 @@ if __name__ == "__main__":
                         default='1',
                         type = int,
                         help='Number of parallel processes')
-    parser.add_argument('--accuracy', '-a',
-                        default='0.9999999',
-                        type = float,
-                        help='Accuracy target for the Monte Carlo simulation')
-    parser.add_argument('--speedup', '-s',
-                        default = False,
-                        action='store_true',
-                        required=False,
-                        help='Run automatic test for speedup graph or not.')
+    parser.add_argument('--steps', '-s',
+                        default='1000',
+                        type = int,
+                        help='Number of steps in the Monte Carlo simulation')
     args = parser.parse_args()
-    if args.speedup is True:
-        # Override any manual worker setting user might have set
-        args.workers = 1
-        print_speedup(args)
-    else:
-        compute_pi(args)
+    start = time.time()
+    compute_pi(args)
+    total_time = time.time() - start
+    print("Total time")
+    print("%1.6f" % (total_time))
