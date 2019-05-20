@@ -1,4 +1,5 @@
 from mrjob.job import MRJob, MRStep
+import sys
 import time
 
 class Problem1a(MRJob):
@@ -14,28 +15,31 @@ class Problem1a(MRJob):
                         combiner=self.combiner,
                         reducer=self.reducer),
                         MRStep(reducer=self.results)]
-    
+        '''
+        return [MRStep( mapper=self.mapper,
+                combiner=self.combiner,
+                reducer=self.reducer)]
+        '''
+
     def mapper(self, _, line):
         splitline = line.split()
-        identifier = splitline[0]
-        group = splitline[1]
         value = float(splitline[2])
-        yield ("lineinfo", (identifier, value, group))
+        yield ("lineinfo", value)
 
     def combiner(self, key, counts):
-        minimum = 100000
+        minimum = sys.float_info.max
         maximum = 0
         partial_sum = 0
         bins = [0] * 10
         values = []
         for i, c in enumerate(counts):
-            values.append(c[1])
-            partial_sum += c[1]
-            if c[1] < minimum:
-                minimum = c[1]
-            if c[1] > maximum:
-                maximum = c[1]
-            bindex = int(c[1])
+            values.append(c)
+            partial_sum += c
+            if c < minimum:
+                minimum = c
+            if c > maximum:
+                maximum = c
+            bindex = int(c)
             bins[bindex] += 1
         nr_lines = i +1
         yield ("stats", (nr_lines, partial_sum, values))
@@ -55,8 +59,11 @@ class Problem1a(MRJob):
                 all_values += c[2]
 
             mean = float(total_sum)/total_lines
+            #yield ("Mean: ", mean)
+            
             yield ("standarddev", (mean, all_values))
             yield ("meandev", (mean, all_values))
+            
 
         if key == "bins":
             final_bins = [0] * 10
@@ -66,7 +73,7 @@ class Problem1a(MRJob):
             yield ("bins", final_bins)
         
         if key == "minimum":
-            final_min = 100000
+            final_min = sys.float_info.max
             for c in counts:
                 if c < final_min:
                     final_min = c
