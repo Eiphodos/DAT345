@@ -14,29 +14,29 @@ def print_speedup(args):
     measure_list_x = [1, 2, 4, 8, 16, 32]
     measure_list_y = [1]
 
-    steps_per_time_one = 5393761 / 5.4925
+    steps_per_time_one = 5393761 / 6.9035
 
-    steps_per_time_k = 38211305 / 14.0602
+    steps_per_time_k = 34825572 / 30.6596
     actual_speedup = steps_per_time_k / steps_per_time_one 
     print(actual_speedup)
     measure_list_y.append(actual_speedup)
 
-    steps_per_time_k = 21002732 / 6.0552
+    steps_per_time_k = 7752432 / 4.6811
     actual_speedup = steps_per_time_k / steps_per_time_one 
     print(actual_speedup)
     measure_list_y.append(actual_speedup)
 
-    steps_per_time_k = 17902410 / 4.4018
+    steps_per_time_k = 20043526 / 4.6934
     actual_speedup = steps_per_time_k / steps_per_time_one 
     print(actual_speedup)
     measure_list_y.append(actual_speedup)
 
-    steps_per_time_k = 83851666 / 18.1531
+    steps_per_time_k = 12246466 / 1.4586
     actual_speedup = steps_per_time_k / steps_per_time_one 
     print(actual_speedup)
     measure_list_y.append(actual_speedup)
 
-    steps_per_time_k = 19693904 / 6.5851
+    steps_per_time_k = 20661571 / 1.6721
     actual_speedup = steps_per_time_k / steps_per_time_one 
     print(actual_speedup)
     measure_list_y.append(actual_speedup)
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         epilog = 'Example: mp-pi-montecarlo-pool.py -s 100000 -w 4'
     )
     parser.add_argument('--accuracy', '-a',
-                        default='0.999999',
+                        default='0.99999999',
                         type = float,
                         help='Number of steps in the Monte Carlo simulation')
     parser.add_argument('--file', '-f',
