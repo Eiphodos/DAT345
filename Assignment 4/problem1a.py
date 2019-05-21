@@ -132,7 +132,7 @@ class Problem1a(MRJob):
                 total_sum_std += c[2]
 
             mean_dev = float(total_sum_mean)/total_lines
-            std_dev = float(total_sum_std)/total_lines
+            std_dev = math.sqrt(float(total_sum_std)/total_lines)
             yield("Mean deviation: ", mean_dev)
             yield("Standard deviation: ", std_dev)
 

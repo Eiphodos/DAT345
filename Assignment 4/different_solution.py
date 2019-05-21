@@ -1,29 +1,19 @@
 from mrjob.job import MRJob, MRStep
 import sys
 import time
-import os
-import tempfile
+import math
 
 class Problem1a(MRJob):
 
-    def std_dev(self, value, mean):
-        return (value - mean)**2
-    
     def mean_dev(self, value, mean):
         return abs(value - mean)
-    '''
-    def steps(self):      
-        return [MRStep( mapper=self.mapper,
-                        combiner=self.combiner,
-                        reducer=self.reducer),
-                        MRStep(reducer=self.result)]
-    ''' 
 
     def mapper(self, _, line):
         splitline = line.split()
+        start = time.time()
         group = splitline[1]
         value = float(splitline[2])
-        yield ("lineinfo", value)
+        yield ("lineinfo", (value, start))
     
     def combiner(self, key, counts):
         minimum = sys.float_info.max
@@ -32,21 +22,23 @@ class Problem1a(MRJob):
         partial_sum_squared = 0
         bins = [0] * 10
         values = []
+        start = 0
         for i, c in enumerate(counts):
-            values.append(c)
-            partial_sum += c
-            partial_sum_squared += c ** 2
-            if c < minimum:
-                minimum = c
-            if c > maximum:
-                maximum = c
-            bindex = int(c)
+            values.append(c[0])
+            partial_sum += c[0]
+            partial_sum_squared += c[0] ** 2
+            if c[0] < minimum:
+                minimum = c[0]
+            if c[0] > maximum:
+                maximum = c[0]
+            bindex = int(c[0])
             bins[bindex] += 1
+            start = c[1]
         nr_lines = i +1
-        yield ("stats", (nr_lines, partial_sum, partial_sum_squared, values))
-        yield ("bins", bins)
-        yield ("minimum", minimum)
-        yield ("maximum", maximum)
+        yield ("stats", (nr_lines, partial_sum, partial_sum_squared, values, start))
+        yield ("bins", (bins, start))
+        yield ("minimum", (minimum, start))
+        yield ("maximum", (maximum, start))
     
 
     def reducer(self, key, counts):
@@ -56,24 +48,29 @@ class Problem1a(MRJob):
             total_sum_squared = 0
             final_max = 0
             all_values = []
+
             for c in counts:
                 total_lines += c[0]
                 total_sum += c[1]
                 total_sum_squared += c[2]
                 all_values += c[3]
+                start = c[4]
 
             mean = float(total_sum)/total_lines
-            stand_dev = (total_sum_squared - (total_sum * total_sum)/total_lines)/(total_lines-1)
+            stand_dev = math.sqrt((total_sum_squared - (total_sum * total_sum)/total_lines)/(total_lines-1))
             yield("Standard deviation: ", stand_dev)
 
             mean_deviation = sum([self.mean_dev(value, mean) for value in all_values]) / len(all_values)
             yield("Mean deviation: ", mean_deviation)
+
+            yield("Total time dev: ", time.time() - start)
             
 
         if key == "bins":
             final_bins = [0] * 10
             for c in counts:
-                for i, b in enumerate(c):
+                start = c[1]
+                for i, b in enumerate(c[0]):
                     final_bins[i] += b
 
             yield ("X < 1\t", final_bins[0])
@@ -86,20 +83,28 @@ class Problem1a(MRJob):
             yield ("7 <= X < 8", final_bins[7])
             yield ("8 <= X < 9", final_bins[8])
             yield ("9 <= X", final_bins[9])
+
+            yield("Total time bin: ", time.time() - start)
         
         if key == "minimum":
             final_min = sys.float_info.max
             for c in counts:
-                if c < final_min:
-                    final_min = c
+                start = c[1]
+                if c[0] < final_min:
+                    final_min = c[0]
             yield ("Minimum: ", final_min)
+
+            yield("Total time min: ", time.time() - start)
         
         if key == "maximum":
             final_max = -sys.float_info.max
-            for c in counts:           
-                if c > final_max:
-                    final_max = c
+            for c in counts:
+                start = c[1]           
+                if c[0] > final_max:
+                    final_max = c[0]
             yield ("Maximum: ", final_max)
+
+            yield("Total time max: ", time.time() - start)
             
 if __name__ == '__main__':
     Problem1a.run()
