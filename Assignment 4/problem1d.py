@@ -5,17 +5,35 @@ import math
 
 class Problem1a(MRJob):
 
+    def configure_args(self):
+        super(Problem1a, self).configure_args()
+        self.add_passthru_arg('--group', '-g',
+                             default=-1,
+                             type=int,
+                             required=False,
+                             help='Specify group number to run statistics for')
+
+
     def mean_std_dev(self, value, mean):
         mean_dev = abs(value - mean)
         std_dev = (value - mean)**2
         return mean_dev, std_dev
 
+    def mapper_init(self):
+        self.group_choice = self.options.group
+
     def mapper(self, _, line):
         splitline = line.split()
-        start = time.time()
+        group = int(splitline[1])
         value = float(splitline[2])
-        yield ("lineinfo", (value, start))
-    
+        #If group is the default value, process all data
+        if self.group_choice == -1:
+            yield ("lineinfo", value)
+        #Else we only process the data that belongs to the specified group
+        elif self.group_choice == group:
+            yield ("lineinfo", value)
+
+        
     def combiner(self, key, counts):
         minimum = sys.float_info.max
         maximum = -sys.float_info.max
