@@ -20,21 +20,22 @@ class Problem1a(MRJob):
         minimum = sys.float_info.max
         maximum = -sys.float_info.max
         partial_sum = 0
-        partial_sum_squared = 0
         bins = [0] * 10
         values = []
+        start = time.time()
         for i, c in enumerate(counts):
-            values.append(c)
-            partial_sum += c
-            partial_sum_squared += c ** 2
-            if c < minimum:
-                minimum = c
-            if c > maximum:
-                maximum = c
-            bindex = int(c)
+            values.append(c[0])
+            partial_sum += c[0]
+            if c[0] < minimum:
+                minimum = c[0]
+            if c[0] > maximum:
+                maximum = c[0]
+            bindex = int(c[0])
             bins[bindex] += 1
+            if c[1] < start:
+                start = c[1]
         nr_lines = i +1
-        yield ("stats", (nr_lines, partial_sum, partial_sum_squared, values))
+        yield ("stats", (nr_lines, partial_sum, values, start))
         yield ("bins", bins)
         yield ("minimum", minimum)
         yield ("maximum", maximum)
@@ -46,15 +47,16 @@ class Problem1a(MRJob):
         if key == "stats":
             total_lines = 0
             total_sum = 0
-            total_sum_squared = 0
             final_max = 0
             all_values = []
+            start = time.time()
 
             for c in counts:
                 total_lines += c[0]
                 total_sum += c[1]
-                total_sum_squared += c[2]
-                all_values += c[3]
+                all_values += c[2]
+                if c[3] < start:
+                    start = c[3]
 
             mean = float(total_sum)/total_lines
 
@@ -84,6 +86,7 @@ class Problem1a(MRJob):
 
             yield("Standard deviation: ", stand_dev)
             yield("Mean deviation: ", mean_deviation)
+            yield("Total time: ", time.time() -start )
 
         if key == "bins":
             final_bins = [0] * 10
@@ -91,7 +94,7 @@ class Problem1a(MRJob):
             for c in counts:
                 for i, b in enumerate(c):
                     final_bins[i] += b
-            yield ("X < 1\t", final_bins[0])
+            yield ("X < 1", final_bins[0])
             yield ("1 <= X < 2", final_bins[1])
             yield ("2 <= X < 3", final_bins[2])
             yield ("3 <= X < 4", final_bins[3])
