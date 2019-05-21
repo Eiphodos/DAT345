@@ -1,6 +1,13 @@
 from mrjob.job import MRJob, MRStep
 import sys
 import time
+import os
+import tempfile
+
+if os.name == 'nt':
+    tempfile.tempdir = 'C:\Temp'
+else:
+    tempfile.tempdir = '/data/tmp'
 
 class Problem1a(MRJob):
 
@@ -9,18 +16,13 @@ class Problem1a(MRJob):
     
     def mean_dev(self, value, mean):
         return abs(value - mean)
-
-    def steps(self):
-        '''
+    '''
+    def steps(self):      
         return [MRStep( mapper=self.mapper,
                         combiner=self.combiner,
                         reducer=self.reducer),
-                        MRStep(mapper=self.maptest)]
-        '''
-        return [MRStep( mapper=self.mapper,
-                combiner=self.combiner,
-                reducer=self.reducer)]
-        
+                        MRStep(reducer=self.result)]
+    ''' 
 
     def mapper(self, _, line):
         splitline = line.split()
@@ -29,7 +31,7 @@ class Problem1a(MRJob):
 
     def combiner(self, key, counts):
         minimum = sys.float_info.max
-        maximum = 0
+        maximum = -sys.float_info.max
         partial_sum = 0
         partial_sum_squared = 0
         bins = [0] * 10
@@ -86,7 +88,7 @@ class Problem1a(MRJob):
             yield ("minimum", final_min)
         
         if key == "maximum":
-            final_max = 0
+            final_max = -sys.float_info.max
             for c in counts:           
                 if c > final_max:
                     final_max = c
