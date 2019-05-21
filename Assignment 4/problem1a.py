@@ -76,7 +76,7 @@ class Problem1a(MRJob):
                 for i, b in enumerate(c):
                     final_bins[i] += b
 
-            yield ("X < 1\t", bins[0])
+            yield ("X < 1\t", final_bins[0])
             yield ("1 <= X < 2", final_bins[1])
             yield ("2 <= X < 3", final_bins[2])
             yield ("3 <= X < 4", final_bins[3])
