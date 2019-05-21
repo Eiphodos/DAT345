@@ -21,9 +21,10 @@ class Problem1a(MRJob):
 
     def mapper(self, _, line):
         splitline = line.split()
+        group = splitline[1]
         value = float(splitline[2])
         yield ("lineinfo", value)
-
+    
     def combiner(self, key, counts):
         minimum = sys.float_info.max
         maximum = -sys.float_info.max
@@ -46,6 +47,7 @@ class Problem1a(MRJob):
         yield ("bins", bins)
         yield ("minimum", minimum)
         yield ("maximum", maximum)
+    
 
     def reducer(self, key, counts):
         if key == "stats":
@@ -88,6 +90,7 @@ class Problem1a(MRJob):
                 if c > final_max:
                     final_max = c
             yield ("maximum", final_max)
+            
     '''
     def results(self, key, result):
         if key == "standarddev":
@@ -117,7 +120,4 @@ class Problem1a(MRJob):
     '''
             
 if __name__ == '__main__':
-    start = time.time()
     Problem1a.run()
-    total_time = time.time() - start
-    print("Total time: %1.6f" % total_time)
