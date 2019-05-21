@@ -11,15 +11,16 @@ class Problem1a(MRJob):
         return abs(value - mean)
 
     def steps(self):
+        '''
         return [MRStep( mapper=self.mapper,
                         combiner=self.combiner,
                         reducer=self.reducer),
-                        MRStep(reducer=self.results)]
+                        MRStep(mapper=self.maptest)]
         '''
         return [MRStep( mapper=self.mapper,
                 combiner=self.combiner,
                 reducer=self.reducer)]
-        '''
+        
 
     def mapper(self, _, line):
         splitline = line.split()
@@ -30,11 +31,13 @@ class Problem1a(MRJob):
         minimum = sys.float_info.max
         maximum = 0
         partial_sum = 0
+        partial_sum_squared = 0
         bins = [0] * 10
         values = []
         for i, c in enumerate(counts):
             values.append(c)
             partial_sum += c
+            partial_sum_squared += c ** 2
             if c < minimum:
                 minimum = c
             if c > maximum:
@@ -42,7 +45,7 @@ class Problem1a(MRJob):
             bindex = int(c)
             bins[bindex] += 1
         nr_lines = i +1
-        yield ("stats", (nr_lines, partial_sum, values))
+        yield ("stats", (nr_lines, partial_sum, partial_sum_squared, values))
         yield ("bins", bins)
         yield ("minimum", minimum)
         yield ("maximum", maximum)
@@ -51,18 +54,21 @@ class Problem1a(MRJob):
         if key == "stats":
             total_lines = 0
             total_sum = 0
+            total_sum_squared = 0
             final_max = 0
             all_values = []
             for c in counts:
                 total_lines += c[0]
                 total_sum += c[1]
-                all_values += c[2]
+                total_sum_squared += c[2]
+                all_values += c[3]
 
             mean = float(total_sum)/total_lines
-            #yield ("Mean: ", mean)
-            
-            yield ("standarddev", (mean, all_values))
-            yield ("meandev", (mean, all_values))
+            stand_dev = (total_sum_squared - (total_sum * total_sum)/total_lines)/(total_lines-1)
+            yield("Standard deviation: ", stand_dev)
+
+            mean_deviation = sum([self.mean_dev(value, mean) for value in all_values]) / len(all_values)
+            yield("Mean deviation: ", mean_deviation)
             
 
         if key == "bins":
@@ -85,7 +91,7 @@ class Problem1a(MRJob):
                 if c > final_max:
                     final_max = c
             yield ("maximum", final_max)
-
+    '''
     def results(self, key, result):
         if key == "standarddev":
             mean, all_values = next(result)
@@ -111,7 +117,8 @@ class Problem1a(MRJob):
             yield ("Minimum: ", result)
         if key == "maximum":
             yield ("Maximum: ", result)
-
+    '''
+            
 if __name__ == '__main__':
     start = time.time()
     Problem1a.run()
