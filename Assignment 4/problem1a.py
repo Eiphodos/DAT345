@@ -6,12 +6,6 @@ import tempfile
 import math
 
 class Problem1a(MRJob):
-
-    def std_dev(self, value, mean):
-        return (value - mean)**2
-    
-    def mean_dev(self, value, mean):
-        return abs(value - mean)
     
     def steps(self):      
         return [MRStep( mapper=self.mapper,
@@ -26,7 +20,8 @@ class Problem1a(MRJob):
         splitline = line.split()
         group = splitline[1]
         value = float(splitline[2])
-        yield ("lineinfo", value)
+        start = time.time()
+        yield ("lineinfo", (value, start))
     
     def combiner(self, key, counts):
         minimum = sys.float_info.max
@@ -35,16 +30,17 @@ class Problem1a(MRJob):
         bins = [0] * 10
         values = []
         for i, c in enumerate(counts):
-            values.append(c)
-            partial_sum += c
-            if c < minimum:
-                minimum = c
-            if c > maximum:
-                maximum = c
-            bindex = int(c)
+            values.append(c[0])
+            partial_sum += c[0]
+            if c[0] < minimum:
+                minimum = c[0]
+            if c[0] > maximum:
+                maximum = c[0]
+            bindex = int(c[0])
             bins[bindex] += 1
+            start = c[1]
         nr_lines = i +1
-        yield ("stats", (nr_lines, partial_sum, values))
+        yield ("stats", (nr_lines, partial_sum, values, start))
         yield ("bins", bins)
         yield ("minimum", minimum)
         yield ("maximum", maximum)
@@ -59,11 +55,12 @@ class Problem1a(MRJob):
                 total_lines += c[0]
                 total_sum += c[1]
                 all_values += c[2]
+                start = c[3]
 
             mean = float(total_sum)/total_lines
 
             for v in all_values:
-                yield("deviation", (mean, v))
+                yield("deviation", (mean, v, start))
             
 
         if key == "bins":
@@ -90,10 +87,10 @@ class Problem1a(MRJob):
 
     def mean_dev_mapper(self, key, line):
         if key == "deviation":
-            mean, value = line
+            mean, value, start = line
             deviation = abs(value - mean)
             std_deviation = (value - mean) ** 2
-            yield("deviation", (deviation, std_deviation))
+            yield("deviation", (deviation, std_deviation, start))
         if key == "stddev":
             yield(key, line)
         if key == "bins":
@@ -110,8 +107,9 @@ class Problem1a(MRJob):
             for i, c in enumerate(counts):
                 partial_sum_mean += c[0]
                 partial_sum_std += c[1]
+                start = c[2]
             nr_lines = i +1
-            yield ("dev_stats", (nr_lines, partial_sum_mean, partial_sum_std))
+            yield ("dev_stats", (nr_lines, partial_sum_mean, partial_sum_std, start))
         if key == "stddev":
             yield(key, counts)
         if key == "bins":
@@ -130,11 +128,13 @@ class Problem1a(MRJob):
                 total_lines += c[0]
                 total_sum_mean += c[1]
                 total_sum_std += c[2]
+                start = c[3]
 
             mean_dev = float(total_sum_mean)/total_lines
             std_dev = math.sqrt(float(total_sum_std)/total_lines)
             yield("Mean deviation: ", mean_dev)
             yield("Standard deviation: ", std_dev)
+            yield("Total time: ", time.time() - start) 
 
         if key == "bins":
             final_bins = next(counts)[0]
