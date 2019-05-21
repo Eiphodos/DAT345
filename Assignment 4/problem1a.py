@@ -7,7 +7,7 @@ import tempfile
 if os.name == 'nt':
     tempfile.tempdir = 'C:\Temp'
 else:
-    tempfile.tempdir = '/data/tmp'
+    tempfile.tempdir = '~/tmp'
 
 class Problem1a(MRJob):
 
