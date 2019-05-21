@@ -75,49 +75,31 @@ class Problem1a(MRJob):
             for c in counts:
                 for i, b in enumerate(c):
                     final_bins[i] += b
-            yield ("bins", final_bins)
+
+            yield ("X < 1\t", bins[0])
+            yield ("1 <= X < 2", final_bins[1])
+            yield ("2 <= X < 3", final_bins[2])
+            yield ("3 <= X < 4", final_bins[3])
+            yield ("4 <= X < 5", final_bins[4])
+            yield ("5 <= X < 6", final_bins[5])
+            yield ("6 <= X < 7", final_bins[6])
+            yield ("7 <= X < 8", final_bins[7])
+            yield ("8 <= X < 9", final_bins[8])
+            yield ("9 <= X", final_bins[9])
         
         if key == "minimum":
             final_min = sys.float_info.max
             for c in counts:
                 if c < final_min:
                     final_min = c
-            yield ("minimum", final_min)
+            yield ("Minimum: ", final_min)
         
         if key == "maximum":
             final_max = -sys.float_info.max
             for c in counts:           
                 if c > final_max:
                     final_max = c
-            yield ("maximum", final_max)
-            
-    '''
-    def results(self, key, result):
-        if key == "standarddev":
-            mean, all_values = next(result)
-            standard_dev = sum([self.std_dev(value, mean) for value in all_values]) / len(all_values)
-            yield("Standard deviation: ", standard_dev)
-        if key == "meandev":
-            mean, all_values = next(result)
-            mean_deviation = sum([self.mean_dev(value, mean) for value in all_values]) / len(all_values)
-            yield("Mean deviation: ", mean_deviation)
-        if key == "bins":
-            bins = next(result)
-            yield ("X < 1\t", bins[0])
-            yield ("1 <= X < 2", bins[1])
-            yield ("2 <= X < 3", bins[2])
-            yield ("3 <= X < 4", bins[3])
-            yield ("4 <= X < 5", bins[4])
-            yield ("5 <= X < 6", bins[5])
-            yield ("6 <= X < 7", bins[6])
-            yield ("7 <= X < 8", bins[7])
-            yield ("8 <= X < 9", bins[8])
-            yield ("9 <= X", bins[9])
-        if key == "minimum":
-            yield ("Minimum: ", result)
-        if key == "maximum":
-            yield ("Maximum: ", result)
-    '''
+            yield ("Maximum: ", final_max)
             
 if __name__ == '__main__':
     Problem1a.run()
