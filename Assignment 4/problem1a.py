@@ -66,19 +66,18 @@ class Problem1a(MRJob):
 
             dev_list = [self.mean_std_dev(value, mean) for value in all_values]
 
-            # I tried another approach where I had an additional step of map/combine/reduce
-            # Where the new mapper would do calculate a deviation on a single value with the mean from the first reducer
-            # Combiner would do the partial sums for the std and mean deviations
-            # and the final second reducer to summarize and calculate the final mean and std deviations
-            # The min/max/bins values would just pass through their values without touching them.
-            # That double m/c/r version was slower than this version by a factor of about 10 so I gave it up.
+            # I tried another approach where I had an additional step of map/combine/reduce.
+            # The new mapper would calculate a deviation on a single value with the mean from the first reducer
+            # The combiner would do the partial sums for the std and mean deviations
+            # The final second reducer would summarize and calculate the final mean and std deviations
+            # The min/max/bins values would just be passed through.
+            # The problem I had with this was that I didnt know how to call the mapper with the initial data and the mean
+            # without sending 1 yield per line from the reducer, which meant I had to loop through the data anyway
             
             # I experimented a bit with single pass algorithms for standard dev and mean dev and while 
             # I got that working for standard dev, I could not find any good algo for mean dev which meant I had to
             # do an additional pass over the data anyway.
 
-            # This version was still very fast, 24 seconds on single core and 6 seconds on 32 cores on the compute server
-            # to complete full calculations on the entire dataset (excluding time to setup tmp files and cleanup). 
 
             mean_devs, std_devs = zip(*dev_list)
             stand_dev = math.sqrt(sum(std_devs)/total_lines)
